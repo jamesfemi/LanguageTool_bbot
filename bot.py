@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
@@ -80,13 +81,20 @@ def main():
         logger.error("No TELEGRAM_TOKEN found in environment variables!")
         return
 
+    # FIX FOR PYTHON 3.14+: Explicitly set an event loop for the main thread
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     # Build and start the bot application
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, check_grammar))
 
-    # Run via polling (ideal for free hosting instances)
+    # Run via polling (ideal for background workers)
     application.run_polling()
 
 if __name__ == "__main__":
